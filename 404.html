@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found — Moon Lite's Footwear</title>
+  <meta name="robots" content="noindex">
+  <!-- NOTE: this page is served by the host at whatever URL was mistyped,
+       including deep ones like /shoes/nike. Every path here must therefore be
+       root-absolute ("/assets/...") rather than relative, and the page is kept
+       standalone — no config.js, no store.js — so it renders even if the
+       scripts fail. That also means it won't look right opened from file://. -->
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#0E0E10">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,500&family=Jost:wght@400;500;600&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/moonlite.css">
+  <style>
+    body { background: var(--ink); color: var(--ivory); }
+    .lost {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: var(--edge);
+      position: relative;
+      overflow: hidden;
+    }
+    .lost__moon {
+      position: absolute;
+      width: min(60vw, 460px);
+      top: -12%;
+      right: -8%;
+      opacity: .16;
+      pointer-events: none;
+    }
+    .lost__inner { position: relative; max-width: 40rem; }
+    .lost__mark { width: 132px; margin: 0 auto 2.2rem; display: block; }
+    .lost__code {
+      font-family: var(--util);
+      font-size: var(--step--1);
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--gold-bright);
+      margin: 0 0 1rem;
+    }
+    .lost h1 {
+      font-family: var(--display);
+      font-size: var(--step-3);
+      line-height: .98;
+      margin: 0 0 1.1rem;
+      color: var(--ivory);
+    }
+    .lost h1 em { color: var(--gold-bright); font-style: italic; }
+    .lost p {
+      color: #B5AE9F;
+      font-size: var(--step-0);
+      line-height: 1.65;
+      margin: 0 auto 2.2rem;
+      max-width: 32rem;
+    }
+    .lost__cta { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+    .lost__links {
+      margin-top: 2.6rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid rgba(250,247,241,.14);
+      font-family: var(--util);
+      font-size: var(--step--1);
+      letter-spacing: .04em;
+    }
+    .lost__links a { color: #B5AE9F; text-decoration: none; margin: 0 .7rem; }
+    .lost__links a:hover { color: var(--gold-bright); }
+  </style>
+</head>
+<body>
+  <main class="lost">
+    <svg class="lost__moon" viewBox="0 0 200 200" aria-hidden="true">
+      <path d="M130 20a80 80 0 1 0 0 160 64 64 0 0 1 0-160z" fill="#C38F42"/>
+    </svg>
+
+    <div class="lost__inner">
+      <a href="/" aria-label="Moon Lite's Footwear home">
+        <img class="lost__mark" src="/assets/img/logo-light.png" alt="Moon Lite's Footwear">
+      </a>
+
+      <p class="lost__code">Error 404</p>
+      <h1>This pair has <em>walked off</em>.</h1>
+      <p>The page you're looking for isn't here — it may have sold out, been renamed, or the link had a typo in it. The collection is still where you left it.</p>
+
+      <div class="lost__cta">
+        <a class="btn btn--gold" href="/shop">Back to the shop</a>
+        <a class="btn btn--ghost-ivory" href="/">Go to the home page</a>
+      </div>
+
+      <nav class="lost__links" aria-label="Elsewhere on the site">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/size-guide">Size guide</a>
+        <a href="/about">Our story</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

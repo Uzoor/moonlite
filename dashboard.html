@@ -6,12 +6,21 @@
   <title>Product Dashboard — Moon Lite's Footwear</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Moon Lite's">
+  <meta name="theme-color" content="#0E0E10">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;1,6..96,500&family=Jost:wght@400;500;600&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/moonlite.css">
   <style>
     body { background: #F1ECE1; }
+    [hidden] { display: none !important; }
+    /* ---- notice banner ---- */
+    .banner { border: 1px solid var(--line); border-left: 4px solid var(--gold); background: var(--ivory); border-radius: 8px; padding: .9rem 1.1rem; margin-bottom: 1.4rem; font-size: var(--step--1); line-height: 1.5; }
+    .banner.warn { border-left-color: #C98A2B; }
+    .banner.bad { border-left-color: #A83232; }
+    .banner b { font-weight: 700; }
     /* ---- gate ---- */
     .gate { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; background: #0E0E10; padding: 1.5rem; }
     .gate__card { width: min(400px, 100%); background: var(--ivory); border-radius: 8px; padding: 2.4rem; text-align: center; box-shadow: var(--shadow); }
@@ -19,6 +28,10 @@
     .gate__card h1 { font-size: var(--step-2); margin-bottom: .3rem; }
     .gate__card p { color: var(--muted); font-size: var(--step--1); margin-bottom: 1.5rem; }
     .gate__card input { width: 100%; text-align: center; letter-spacing: .3em; font-size: 1.2rem; padding: .9em; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 1rem; }
+    .gate__card .login input { text-align: left; letter-spacing: normal; font-size: 1rem; padding: .8em .9em; margin-bottom: .7rem; }
+    .gate__card .login input:focus { border-color: var(--gold); outline: none; }
+    .gate__note { color: var(--muted); font-size: 12px; margin: .9rem 0 0; }
+    .gate__card [hidden] { display: none; }
     .gate__err { color: #A83232; font-size: var(--step--1); min-height: 1.3em; margin-bottom: .6rem; }
     .app { display: none; }
     .app.is-on { display: block; }
@@ -95,6 +108,10 @@
     .settings { margin-top: 2.5rem; background: var(--ivory); border: 1px solid var(--line); border-radius: 8px; padding: 1.5rem; }
     .settings h3 { font-family: var(--display); font-size: var(--step-1); margin-bottom: .3rem; }
     .settings p { color: var(--muted); font-size: var(--step--1); margin-bottom: 1rem; }
+    .settings .fld input, .settings .fld textarea { background: #fff; }
+    .hour-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+    .hour-row input { flex: 1; }
+    .wa-ok { color: #2E7D32; } .wa-bad { color: #A83232; }
     .hashout { font-family: monospace; font-size: 12px; word-break: break-all; background: var(--ivory-dim); border: 1px solid var(--line); border-radius: var(--radius); padding: .7rem; margin-top: .7rem; display: none; }
     .hashout.is-on { display: block; }
     .storage-bar { height: 6px; border-radius: 3px; background: var(--ivory-dim); overflow: hidden; margin-top: .5rem; }
@@ -102,16 +119,27 @@
   </style>
 </head>
 <body>
-  <!-- ======================= PASSCODE GATE ======================= -->
+  <!-- ======================= SIGN-IN GATE ======================= -->
   <div class="gate" data-gate>
     <div class="gate__card">
       <img src="assets/img/mark-light.png" alt="Moon Lite's">
       <h1>Dashboard</h1>
-      <p>Enter your passcode to manage products.</p>
+      <p data-gate-sub>Enter your passcode to manage products.</p>
+
+      <!-- passcode gate — used when no database is connected -->
       <form data-gate-form>
         <input type="password" placeholder="Enter passcode" data-gate-input autocomplete="current-password" aria-label="Passcode">
         <div class="gate__err" data-gate-err></div>
         <button class="btn btn--gold btn--block" type="submit">Unlock</button>
+      </form>
+
+      <!-- real login — used when the database is connected -->
+      <form class="login" data-login-form hidden>
+        <input type="email" name="email" placeholder="Your email" autocomplete="username" aria-label="Email">
+        <input type="password" name="password" placeholder="Your password" autocomplete="current-password" aria-label="Password">
+        <div class="gate__err" data-login-err></div>
+        <button class="btn btn--gold btn--block" type="submit" data-login-btn>Sign in</button>
+        <p class="gate__note">Forgotten your password? Ask whoever set up your shop to reset it for you.</p>
       </form>
     </div>
   </div>
@@ -129,11 +157,14 @@
     </div>
 
     <div class="dash-wrap">
+      <div class="banner" data-banner hidden></div>
+
       <div class="stats" data-stats></div>
 
       <div class="dash-tools">
         <button class="btn btn--gold" data-add-product>+ Add product</button>
         <input type="search" placeholder="Search products…" data-dash-search aria-label="Search products">
+        <button class="btn btn--ghost btn--sm" data-upload-seed hidden>Upload catalogue to the database</button>
         <button class="btn btn--ghost btn--sm" data-export>Export catalogue</button>
         <button class="btn btn--ghost btn--sm" data-reset>Reset to samples</button>
       </div>
@@ -142,18 +173,91 @@
 
       <!-- settings -->
       <div class="settings">
-        <h3>Change passcode</h3>
-        <p>Type a new passcode below to generate its secure code. Copy the code, then paste it into <b>assets/js/config.js</b> as <code>adminPassHash</code> and re-upload that file. (A static site can't store secrets itself.)</p>
-        <div class="grid2">
-          <div class="fld" style="margin:0"><label>New passcode</label><input type="text" data-newpass placeholder="Type a new passcode"></div>
-          <div class="fld" style="margin:0;display:flex;align-items:flex-end"><button class="btn btn--ghost btn--block" data-genhash>Generate code</button></div>
-        </div>
-        <div class="hashout" data-hashout></div>
+        <h3>Business details</h3>
+        <p data-settings-note>Your contact info and the WhatsApp number that receives every order. Changes preview on your site straight away — tap <b>Export settings file</b> afterwards to make them permanent for customers.</p>
+        <form data-settings-form autocomplete="off">
+          <div class="grid2">
+            <div class="fld"><label>Brand name</label><input type="text" name="brandName" placeholder="Moon Lite's Footwear"></div>
+            <div class="fld"><label>Tagline</label><input type="text" name="tagline" placeholder="Step into the night in style."></div>
+          </div>
 
-        <h3 style="margin-top:1.8rem">Storage used</h3>
-        <p style="margin-bottom:.4rem">Product data and photos are saved in this browser. Keep photos reasonably sized so you don't run out of space.</p>
-        <div class="storage-bar"><i data-storagebar></i></div>
-        <p class="hint" data-storagetxt></p>
+          <div class="fld">
+            <label>WhatsApp number (receives orders) *</label>
+            <input type="tel" name="whatsappNumber" placeholder="e.g. 08031234567 or 2348031234567">
+            <div class="hint" data-wa-preview></div>
+          </div>
+
+          <div class="grid2">
+            <div class="fld"><label>Phone (as displayed)</label><input type="text" name="phoneDisplay" placeholder="+234 803 123 4567"></div>
+            <div class="fld"><label>Email</label><input type="email" name="email" placeholder="hello@moonlitesfootwear.com"></div>
+          </div>
+
+          <div class="grid2">
+            <div class="fld"><label>Store address</label><input type="text" name="address" placeholder="Shop 12, Balogun Market, Lagos Island"></div>
+            <div class="fld"><label>Google Maps link</label><input type="url" name="mapsUrl" placeholder="https://maps.google.com/?q=…"></div>
+          </div>
+
+          <div class="grid2">
+            <div class="fld"><label>Instagram link</label><input type="url" name="instagram" placeholder="https://instagram.com/yourhandle"></div>
+            <div class="fld"><label>TikTok link</label><input type="url" name="tiktok" placeholder="https://tiktok.com/@yourhandle"></div>
+          </div>
+          <div class="grid2">
+            <div class="fld"><label>Facebook link</label><input type="url" name="facebook" placeholder="https://facebook.com/yourpage"></div>
+            <div class="fld"><label>Free delivery over (₦)</label><input type="number" name="freeDeliveryOver" min="0" step="1000" placeholder="150000">
+              <div class="hint">Set to 0 to hide this message.</div></div>
+          </div>
+          <p class="hint" style="margin:-.4rem 0 1rem">Leave a social link empty to hide that icon.</p>
+
+          <div class="fld">
+            <label>Opening hours</label>
+            <div data-hours></div>
+            <button type="button" class="btn btn--ghost btn--sm" data-add-hour style="margin-top:.4rem">+ Add a line</button>
+          </div>
+
+          <div class="fld"><label>Delivery wording</label><textarea name="delivery" rows="2" placeholder="Same-day dispatch within Lagos…"></textarea></div>
+          <div class="fld"><label>Returns wording</label><textarea name="returns" rows="2" placeholder="Wrong size? Swap it within 7 days…"></textarea></div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:.7rem;align-items:center">
+            <button class="btn btn--gold" type="submit" data-save-settings>Save details</button>
+            <button class="btn btn--ghost" type="button" data-export-settings>Export settings file</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-reset-settings>Undo my changes</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="settings">
+        <div data-passcode-panel>
+          <h3>Change passcode</h3>
+          <p>Type a new passcode and tap Set passcode. It applies to this browser immediately, and is included the next time you export your settings file.</p>
+          <div class="grid2">
+            <div class="fld" style="margin:0"><label>New passcode</label><input type="text" data-newpass placeholder="Type a new passcode"></div>
+            <div class="fld" style="margin:0;display:flex;align-items:flex-end"><button class="btn btn--ghost btn--block" data-genhash>Set passcode</button></div>
+          </div>
+          <div class="hashout" data-hashout></div>
+        </div>
+
+        <div data-account-panel hidden>
+          <h3>Your login</h3>
+          <p>Signed in as <b data-account-email>—</b>. Change your password below — you'll use the new one next time you sign in.</p>
+          <div class="grid2">
+            <div class="fld" style="margin:0"><label>New password</label><input type="password" data-newpw placeholder="At least 8 characters" autocomplete="new-password"></div>
+            <div class="fld" style="margin:0;display:flex;align-items:flex-end"><button class="btn btn--ghost btn--block" data-savepw>Change password</button></div>
+          </div>
+          <div class="hashout" data-pwout></div>
+        </div>
+
+        <div data-storage-panel>
+          <h3 style="margin-top:1.8rem">Storage used</h3>
+          <p style="margin-bottom:.4rem">Product data and photos are saved in this browser. Keep photos reasonably sized so you don't run out of space.</p>
+          <div class="storage-bar"><i data-storagebar></i></div>
+          <p class="hint" data-storagetxt></p>
+        </div>
+
+        <div data-db-panel hidden>
+          <h3 style="margin-top:1.8rem">Where your shop lives</h3>
+          <p style="margin-bottom:.4rem">Products, photos and business details are saved in your own database, so every change you make is live for customers straight away. There's nothing to upload.</p>
+          <p class="hint" data-db-status></p>
+        </div>
       </div>
     </div>
   </div>
@@ -224,6 +328,7 @@
 
   <script src="assets/js/config.js"></script>
   <script src="assets/js/products.seed.js"></script>
+  <script src="assets/js/supabase.js"></script>
   <script src="assets/js/store.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
