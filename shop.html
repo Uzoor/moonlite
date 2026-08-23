@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop — Moon Lite's Footwear</title>
+  <meta name="description" content="Browse sneakers, runners, loafers, boots and luxury footwear at Moon Lite's. Filter by category and size, order on WhatsApp.">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,500&family=Jost:wght@400;500;600&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/moonlite.css">
+</head>
+<body data-page="shop">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" data-chrome="header"></header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="breadcrumb"><a href="index.html">Home</a> / Shop</p>
+        <h1>The <em>collection</em></h1>
+        <p>Every pair, in one place. Filter by category or size, then send your bag straight to WhatsApp.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="shop-toolbar">
+          <button class="btn btn--ghost btn--sm filter-toggle" data-filter-toggle>Filters</button>
+          <input class="select" type="search" placeholder="Search pairs…" data-shop-search aria-label="Search products" style="flex:1;max-width:280px">
+          <span class="shop-count" data-shop-count></span>
+          <label class="sr-only" for="sort">Sort</label>
+          <select class="select" id="sort" data-sort>
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </div>
+        <div class="shop-layout">
+          <aside class="filters" aria-label="Filters">
+            <div class="filters__group">
+              <h3>Category</h3>
+              <div class="chip-row" data-filter-cat></div>
+            </div>
+            <div class="filters__group">
+              <h3>Size (EU)</h3>
+              <div class="chip-row" data-filter-size></div>
+            </div>
+          </aside>
+          <div class="product-grid" data-shop-grid></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" data-chrome="footer"></footer>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/products.seed.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/pages.js"></script>
+</body>
+</html>
