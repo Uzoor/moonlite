@@ -27,6 +27,45 @@
   const KEY_PRODUCTS = "moonlite.products.v1";
   const KEY_UNLOCK = "moonlite.dash.unlock";
   const EU_SIZES = [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47];
+
+  /* ---------------- pick-lists ----------------
+     Typing these by hand was slow, and in the case of Category it was also
+     unsafe: "sneakers" and "Sneakers" become two separate filters on the
+     shop. Every list below keeps an escape hatch so nothing is ever locked
+     out — she just doesn't have to type the ninety per cent case. */
+  const CATEGORIES = ["Sneakers", "Running", "Loafers", "Boots", "Sandals", "Slides", "Heels", "Luxury", "Kids"];
+  const BADGES = ["New", "Bestseller", "Trending", "Premium", "Limited", "Restocked", "Sale"];
+  /* name → swatch, so choosing a colour name sets the hex for her */
+  const COLOURS = [
+    ["Black", "#151515"], ["Charcoal", "#3A3A3E"], ["Grey", "#8A8A8E"], ["Silver", "#C7C9CC"],
+    ["White", "#F2EEE5"], ["Cream", "#EFE7D8"], ["Beige", "#D8C7AE"], ["Sand", "#C9B79A"],
+    ["Tan", "#B98B5E"], ["Mocha", "#9A6B45"], ["Brown", "#6B4A2F"], ["Gold", "#C38F42"],
+    ["Navy", "#1E2438"], ["Blue", "#2C5AA8"], ["Denim", "#8C97B8"], ["Olive", "#5C6033"],
+    ["Green", "#2F6B44"], ["Red", "#B3282D"], ["Burgundy", "#5E1F2A"], ["Pink", "#E6337F"],
+    ["Purple", "#5B3A8C"], ["Yellow", "#E3B23C"], ["Orange", "#D2691E"], ["Multicolour", "#7A7A7A"]
+  ];
+  const SIZE_PRESETS = {
+    men: [40, 41, 42, 43, 44, 45, 46],
+    women: [35, 36, 37, 38, 39, 40, 41],
+    all: EU_SIZES.slice(),
+    none: []
+  };
+  const HOUR_DAYS = [
+    "Monday – Friday", "Monday – Saturday", "Monday – Sunday", "Every day",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+    "Public holidays"
+  ];
+  /* 6:00 AM through 11:30 PM in half hours */
+  const CLOCK = (function () {
+    const out = [];
+    for (let h = 6; h <= 23; h++) {
+      const ampm = h < 12 ? "AM" : "PM";
+      const hh = (h % 12) === 0 ? 12 : (h % 12);
+      out.push(hh + ":00 " + ampm, hh + ":30 " + ampm);
+    }
+    return out;
+  })();
+  const NEW_OPT = "__new";   // the "type my own" sentinel used by every list
   const IMG_MAXDIM = 1000;   // px — photos are downscaled to fit this
   const IMG_QUALITY = 0.82;  // jpeg quality
   const STORAGE_BUDGET = 4.6 * 1024 * 1024; // ~localStorage ceiling for the bar
@@ -36,6 +75,40 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   const show = (el) => { if (el) el.hidden = false; };
   const hide = (el) => { if (el) el.hidden = true; };
+
+  /* ================= DROPDOWN HELPERS ================= */
+  /* Build the option list for a <select>.
+     `current` is whatever the product already holds — it gets appended if our
+     list doesn't contain it, so editing an old product can never silently
+     drop its value. `customLabel` adds the "type my own" row at the bottom. */
+  function optionsHTML(values, current, placeholder, customLabel) {
+    const list = values.slice();
+    const cur = current == null ? "" : String(current);
+    if (cur && list.indexOf(cur) === -1) list.push(cur);
+    let html = placeholder ? '<option value="">' + esc(placeholder) + "</option>" : "";
+    html += list.map(v =>
+      '<option value="' + esc(v) + '"' + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>"
+    ).join("");
+    if (customLabel) html += '<option value="' + NEW_OPT + '">' + esc(customLabel) + "</option>";
+    return html;
+  }
+
+  /* Show the free-text box only while "type my own" is chosen. */
+  function wireCustom(sel, input) {
+    if (!sel || !input) return;
+    sel.addEventListener("change", () => {
+      const on = sel.value === NEW_OPT;
+      input.hidden = !on;
+      if (on) { input.value = ""; input.focus(); }
+    });
+  }
+
+  /* Read a select, falling through to its free-text box. */
+  function pick(sel, input) {
+    if (!sel) return "";
+    if (sel.value === NEW_OPT) return input ? input.value.trim() : "";
+    return sel.value.trim();
+  }
 
   /* editor state */
   let editingId = null;
@@ -368,18 +441,53 @@
     const wrap = $("[data-colors]");
     const row = document.createElement("div");
     row.className = "color-row";
+    const known = COLOURS.some(c => c[0] === name);
+    const custom = !!name && !known;
     row.innerHTML =
-      `<input type="color" value="${hex || "#111111"}" aria-label="Colour swatch">
-       <input type="text" placeholder="Colour name (e.g. Black)" value="${esc(name || "")}">
-       <button type="button" class="icon-btn danger" aria-label="Remove colour">✕</button>`;
-    row.querySelector(".icon-btn").addEventListener("click", () => row.remove());
+      '<input type="color" value="' + esc(hex || "#151515") + '" aria-label="Colour swatch" data-color-swatch>'
+      + '<select aria-label="Colour name" data-color-name>'
+      + '<option value="">Choose a colour</option>'
+      + COLOURS.map(c =>
+          '<option value="' + esc(c[0]) + '" data-hex="' + c[1] + '"'
+          + (c[0] === name ? " selected" : "") + ">" + esc(c[0]) + "</option>").join("")
+      + '<option value="' + NEW_OPT + '"' + (custom ? " selected" : "") + ">+ Another colour…</option>"
+      + "</select>"
+      + '<input type="text" placeholder="Colour name" data-color-other value="'
+      + esc(custom ? name : "") + '"' + (custom ? "" : " hidden") + ">"
+      + '<button type="button" class="icon-btn danger" aria-label="Remove colour">✕</button>';
+
+    const sel = row.querySelector("[data-color-name]");
+    const swatch = row.querySelector("[data-color-swatch]");
+    const other = row.querySelector("[data-color-other]");
+
+    sel.addEventListener("change", () => {
+      if (sel.value === NEW_OPT) { other.hidden = false; other.focus(); }
+      else {
+        other.hidden = true;
+        // the swatch follows the name, so she never hunts for a hex by eye
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && opt.dataset.hex) swatch.value = opt.dataset.hex;
+      }
+      suggestSubtitle();
+    });
+    other.addEventListener("input", suggestSubtitle);
+    row.querySelector(".icon-btn").addEventListener("click", () => { row.remove(); suggestSubtitle(); });
     wrap.appendChild(row);
   }
   function collectColors() {
     return $$("[data-colors] .color-row").map(r => ({
-      name: r.querySelector('input[type=text]').value.trim(),
-      hex: r.querySelector('input[type=color]').value
+      name: pick(r.querySelector("[data-color-name]"), r.querySelector("[data-color-other]")),
+      hex: r.querySelector("[data-color-swatch]").value
     })).filter(c => c.name);
+  }
+
+  /* The colourway line is almost always just the colour names, so write it for
+     her — but back off the moment she types her own. */
+  let subtitleTouched = false;
+  function suggestSubtitle() {
+    if (subtitleTouched || !form.subtitle) return;
+    const names = collectColors().map(c => c.name);
+    form.subtitle.value = names.slice(0, 3).join(" / ");
   }
 
   function renderThumbs() {
@@ -404,42 +512,70 @@
 
   function openEditor(id) {
     editingId = id || null;
-    form.reset();
-    $("#cat-list").innerHTML = ML.categories().map(c => `<option value="${esc(c)}">`).join("");
+    const p = id ? ML.getProduct(id) : null;
+    if (id && !p) { ML.toast("Product not found."); return; }
 
-    if (id) {
-      const p = ML.getProduct(id);
-      if (!p) { ML.toast("Product not found."); return; }
-      $("[data-modal-title]").textContent = "Edit product";
+    form.reset();
+    hide($("[data-cat-new]"));
+    hide($("[data-badge-new]"));
+
+    /* Her own categories first-class citizens alongside our standard list, so
+       one she already uses is never retyped.
+       The two selects are guarded because this file and dashboard.html are
+       deployed separately: if the markup is a version behind, the old plain
+       text inputs are still there and the editor must open regardless. A
+       silent crash here reads to her as "the Add product button is broken". */
+    const cats = Array.from(new Set(CATEGORIES.concat(ML.categories()))).sort();
+    const catSel = $("[data-cat-select]");
+    const badgeSel = $("[data-badge-select]");
+    if (catSel) catSel.innerHTML = optionsHTML(cats, p ? p.category : "", "Choose a category", "+ New category…");
+    else if (form.category) form.category.value = p ? (p.category || "") : "";
+    if (badgeSel) badgeSel.innerHTML = optionsHTML(BADGES, p ? p.badge : "", "No badge", "+ Custom badge…");
+    else if (form.badge) form.badge.value = p ? (p.badge || "") : "";
+
+    $("[data-modal-title]").textContent = p ? "Edit product" : "Add product";
+    subtitleTouched = !!(p && p.subtitle);
+
+    if (p) {
       form.name.value = p.name || "";
       form.subtitle.value = p.subtitle || "";
-      form.category.value = p.category || "";
       form.price.value = p.price != null ? p.price : "";
       form.oldPrice.value = p.oldPrice != null ? p.oldPrice : "";
       form.stock.value = p.stock != null ? p.stock : "";
-      form.badge.value = p.badge || "";
       form.description.value = p.description || "";
       form.featured.checked = !!p.featured;
       form.soldOut.checked = !!p.soldOut;
       buildSizeToggles(p.sizes || []);
       formImages = (p.images || []).map(src => ({ src }));
     } else {
-      $("[data-modal-title]").textContent = "Add product";
       buildSizeToggles([]);
       formImages = [];
     }
+
     $("[data-colors]").innerHTML = "";
-    if (id) {
-      const p = ML.getProduct(id);
-      (p.colors || []).forEach(c => addColorRow(c.name, c.hex));
-    }
+    ((p && p.colors) || []).forEach(c => addColorRow(c.name, c.hex));
+
     renderThumbs();
     openModal();
+    /* Same principle as the offline banner: if the page is a version behind
+       this script, say which file and stop the guesswork. The editor still
+       works — only the dropdowns are missing. */
+    if (!catSel || !badgeSel) {
+      banner("<b>The page file is out of date.</b> Everything still works, but the "
+        + "Category and Badge dropdowns are missing. Fix: commit <b>dashboard.html</b>, "
+        + "then reload this page with <b>Ctrl+Shift+R</b>.", "warn");
+    }
     setTimeout(() => form.name.focus(), 320);
   }
 
   $("[data-add-product]").addEventListener("click", () => openEditor(null));
-  $("[data-add-color]").addEventListener("click", () => addColorRow("", "#111111"));
+  $("[data-add-color]").addEventListener("click", () => addColorRow("", "#151515"));
+  wireCustom($("[data-cat-select]"), $("[data-cat-new]"));
+  wireCustom($("[data-badge-select]"), $("[data-badge-new]"));
+  if (form.subtitle) form.subtitle.addEventListener("input", () => { subtitleTouched = true; });
+  $$("[data-size-preset]").forEach(b => b.addEventListener("click", () => {
+    buildSizeToggles(SIZE_PRESETS[b.dataset.sizePreset] || []);
+  }));
 
   /* ---------- id + local persistence ---------- */
   function slugify(s) {
@@ -460,12 +596,12 @@
   function readForm(product) {
     product.name = form.name.value.trim();
     product.subtitle = form.subtitle.value.trim();
-    product.category = form.category.value.trim() || "Uncategorised";
+    product.category = (($("[data-cat-select]") ? pick($("[data-cat-select]"), $("[data-cat-new]")) : (form.category ? form.category.value.trim() : ""))) || "Uncategorised";
     product.price = Number(form.price.value);
     const oldP = Number(form.oldPrice.value);
     product.oldPrice = form.oldPrice.value !== "" && oldP > product.price ? oldP : null;
     product.stock = form.stock.value === "" ? 0 : Math.max(0, Math.round(Number(form.stock.value)));
-    product.badge = form.badge.value.trim();
+    product.badge = $("[data-badge-select]") ? pick($("[data-badge-select]"), $("[data-badge-new]")) : (form.badge ? form.badge.value.trim() : "");
     product.description = form.description.value.trim();
     product.sizes = selectedSizes();
     product.colors = collectColors();
@@ -688,18 +824,69 @@
     const wrap = $("[data-hours]");
     const row = document.createElement("div");
     row.className = "hour-row";
+
+    /* Stored hours are one free string ("9:00 AM – 7:00 PM"). Split it back
+       into two clock values so an existing line loads into the dropdowns;
+       anything that doesn't split cleanly falls back to the text box. */
+    const t = String(time || "");
+    const closed = /closed/i.test(t);
+    const parts = t.split(/\s*[–—-]\s*/);
+    const open = parts.length === 2 ? parts[0].trim() : "";
+    const shut = parts.length === 2 ? parts[1].trim() : "";
+    const clockOK = !closed && CLOCK.indexOf(open) > -1 && CLOCK.indexOf(shut) > -1;
+    const customTime = !!t && !closed && !clockOK;
+
     row.innerHTML =
-      `<input type="text" placeholder="e.g. Monday – Friday" value="${esc(day || "")}" data-hour-day>
-       <input type="text" placeholder="e.g. 9:00 AM – 7:00 PM" value="${esc(time || "")}" data-hour-time>
-       <button type="button" class="icon-btn danger" aria-label="Remove this line">✕</button>`;
+      '<select aria-label="Day" data-hour-day>'
+      + optionsHTML(HOUR_DAYS, day || "", "Choose days", "+ Other…")
+      + "</select>"
+      + '<select aria-label="Opens" data-hour-open>'
+      + '<option value="">Opens</option>'
+      + '<option value="closed"' + (closed ? " selected" : "") + ">Closed all day</option>"
+      + CLOCK.map(c => '<option value="' + c + '"' + (clockOK && c === open ? " selected" : "") + ">" + c + "</option>").join("")
+      + "</select>"
+      + '<span class="dash" data-hour-sep' + (closed ? " hidden" : "") + ">–</span>"
+      + '<select aria-label="Closes" data-hour-close' + (closed ? " hidden" : "") + ">"
+      + '<option value="">Closes</option>'
+      + CLOCK.map(c => '<option value="' + c + '"' + (clockOK && c === shut ? " selected" : "") + ">" + c + "</option>").join("")
+      + "</select>"
+      + '<input type="text" placeholder="Type the day" data-hour-daynew hidden>'
+      + '<input type="text" placeholder="Or type the hours yourself" data-hour-time value="'
+      + esc(customTime ? t : "") + '"' + (customTime ? "" : " hidden") + ">"
+      + '<button type="button" class="icon-btn danger" aria-label="Remove this line">✕</button>';
+
+    const daySel = row.querySelector("[data-hour-day]");
+    const dayNew = row.querySelector("[data-hour-daynew]");
+    const openSel = row.querySelector("[data-hour-open]");
+    const closeSel = row.querySelector("[data-hour-close]");
+    const sep = row.querySelector("[data-hour-sep]");
+    const timeIn = row.querySelector("[data-hour-time]");
+
+    wireCustom(daySel, dayNew);
+    openSel.addEventListener("change", () => {
+      // "Closed all day" has no closing time, so take the second half away
+      const isClosed = openSel.value === "closed";
+      closeSel.hidden = isClosed;
+      sep.hidden = isClosed;
+      if (isClosed) timeIn.hidden = true;
+    });
     row.querySelector(".icon-btn").addEventListener("click", () => row.remove());
     wrap.appendChild(row);
   }
   function collectHours() {
-    return $$("[data-hours] .hour-row").map(r => ({
-      day: r.querySelector("[data-hour-day]").value.trim(),
-      time: r.querySelector("[data-hour-time]").value.trim()
-    })).filter(h => h.day || h.time);
+    return $$("[data-hours] .hour-row").map(r => {
+      const openV = r.querySelector("[data-hour-open]").value;
+      const closeV = r.querySelector("[data-hour-close]").value;
+      const typed = r.querySelector("[data-hour-time]");
+      let time = "";
+      if (openV === "closed") time = "Closed";
+      else if (openV && closeV) time = openV + " – " + closeV;
+      else if (typed && !typed.hidden) time = typed.value.trim();
+      return {
+        day: pick(r.querySelector("[data-hour-day]"), r.querySelector("[data-hour-daynew]")),
+        time: time
+      };
+    }).filter(h => h.day || h.time);
   }
 
   function fillSettings() {
