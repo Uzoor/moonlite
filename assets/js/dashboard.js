@@ -78,6 +78,16 @@
       show(passForm); hide(loginForm);
     }
 
+    // the top-right button locks a passcode session but truly signs out of an
+    // account, so say which — the owner guide tells her to press "Sign out".
+    const lockBtn = $("[data-lock]");
+    if (lockBtn) {
+      lockBtn.textContent = LIVE ? "Sign out" : "Lock";
+      lockBtn.title = LIVE
+        ? "Sign out of your account on this device"
+        : "Lock the dashboard on this device";
+    }
+
     // settings note + local-only export buttons
     const note = $("[data-settings-note]");
     if (LIVE && note) note.innerHTML = "Your contact info and the WhatsApp number that receives every order. <b>Changes go live for customers the moment you save</b> — there's nothing to upload.";
@@ -85,6 +95,17 @@
       hide($("[data-export-settings]"));
       hide($("[data-export]"));
       hide($("[data-reset]"));
+    } else {
+      // Not connected to the database. Say so plainly, and say *why*: from the
+      // outside a missing supabase.js and empty keys look identical (both just
+      // leave the export buttons sitting there), and guessing between the two
+      // has already cost a day.
+      const why = !window.MLSB
+        ? "the file <b>assets/js/supabase.js</b> is not loading — check that it exists in the repo and that <b>dashboard.html</b> still has its &lt;script&gt; tag"
+        : "<b>assets/js/config.js</b> has no database keys yet — <b>supabaseUrl</b> and <b>supabaseAnonKey</b> are still empty";
+      banner(
+        "<b>Offline mode.</b> Changes save in this browser only, and publishing "
+        + "still means exporting a file. Reason: " + why + ".", "warn");
     }
 
     // side panels
