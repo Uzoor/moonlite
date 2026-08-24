@@ -70,8 +70,8 @@ window.MOONLITE_CONFIG = {
      supabase-setup.sql: the public can only read, and every write needs
      a signed-in account that only you can create.
      ===================================================================== */
-  supabaseUrl:     "",
-  supabaseAnonKey: "",
+  supabaseUrl:     "https://lablqmwpwzglughklixm.supabase.co",
+  supabaseAnonKey: "sb_publishable_McqGgXRr0u_uWAsU4dh49w_MHKu-xWh",
   supabaseBucket:  "product-photos",
 
   /* =====================================================================
