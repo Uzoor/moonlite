@@ -263,7 +263,7 @@ body.nav-open .nav__toggle span::after  { transform: translateY(-6px) rotate(-45
 /* =====================================================================
    Category tiles (home)
    ===================================================================== */
-.cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: clamp(1rem,2.5vw,1.6rem); }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 260px)); gap: clamp(1rem,2.5vw,1.6rem); justify-content: center; }
 .cat-tile { position: relative; aspect-ratio: 4/5; border-radius: var(--radius); overflow: hidden; background: var(--ivory-dim); display: block; }
 .cat-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
 .cat-tile:hover img { transform: scale(1.06); }
