@@ -85,7 +85,13 @@
     .fld { margin-bottom: 1.1rem; }
     .fld label { display: block; font-family: var(--util); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .35rem; }
     .fld input, .fld textarea, .fld select { width: 100%; padding: .7em .9em; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
-    .fld input:focus, .fld textarea:focus { border-color: var(--gold); outline: none; }
+    .fld input:focus, .fld textarea:focus, .fld select:focus { border-color: var(--gold); outline: none; }
+    /* dropdowns: native control, our chevron — the OS arrow looks unfinished */
+    .fld select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 2.4em;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1.6 6 6.4l5-4.8' fill='none' stroke='%236E685C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+      background-repeat: no-repeat; background-position: right .85em center; background-size: 11px 8px; }
+    .reveal { margin-top: .5rem; }
+    .presets { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
     .hint { font-size: 12px; color: var(--muted); margin-top: .3rem; }
     .size-toggles, .badge-row { display: flex; flex-wrap: wrap; gap: .4rem; }
     .size-toggle { min-width: 44px; padding: .5em; text-align: center; font-family: var(--util); border: 1px solid var(--line); border-radius: var(--radius); background: #fff; cursor: pointer; }
@@ -93,8 +99,9 @@
     .checkline { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; font-family: var(--util); }
     .checkline input { width: auto; }
     /* colors */
-    .color-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
-    .color-row input[type=text] { flex: 1; }
+    .color-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+    .color-row select { flex: 1; min-width: 130px; }
+    .color-row input[type=text] { flex: 1 1 100%; }
     .color-row input[type=color] { width: 46px; height: 40px; padding: 2px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; cursor: pointer; }
     /* dropzone */
     .dropzone { border: 2px dashed var(--line); border-radius: 8px; padding: 1.4rem; text-align: center; color: var(--muted); cursor: pointer; transition: border-color .2s, background .2s; }
@@ -111,8 +118,10 @@
     .settings h3 { font-family: var(--display); font-size: var(--step-1); margin-bottom: .3rem; }
     .settings p { color: var(--muted); font-size: var(--step--1); margin-bottom: 1rem; }
     .settings .fld input, .settings .fld textarea { background: #fff; }
-    .hour-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
-    .hour-row input { flex: 1; }
+    .hour-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+    .hour-row select { flex: 1 1 auto; min-width: 118px; }
+    .hour-row input { flex: 1 1 100%; }
+    .hour-row .dash { font-family: var(--util); color: var(--muted); }
     .wa-ok { color: #2E7D32; } .wa-bad { color: #A83232; }
     .hashout { font-family: monospace; font-size: 12px; word-break: break-all; background: var(--ivory-dim); border: 1px solid var(--line); border-radius: var(--radius); padding: .7rem; margin-top: .7rem; display: none; }
     .hashout.is-on { display: block; }
@@ -279,8 +288,10 @@
         </div>
         <div class="grid2">
           <div class="fld"><label>Subtitle / colourway</label><input type="text" name="subtitle" placeholder="e.g. Black / White"></div>
-          <div class="fld"><label>Category</label><input type="text" name="category" list="cat-list" placeholder="e.g. Sneakers">
-            <datalist id="cat-list"></datalist></div>
+          <div class="fld"><label>Category</label>
+            <select name="category" data-cat-select></select>
+            <input type="text" class="reveal" name="categoryNew" data-cat-new placeholder="Name the new category" hidden>
+          </div>
         </div>
         <div class="grid2">
           <div class="fld"><label>Price (₦) *</label><input type="number" name="price" required min="0" step="500" placeholder="26500"></div>
@@ -288,12 +299,21 @@
         </div>
         <div class="grid2">
           <div class="fld"><label>Stock (pairs)</label><input type="number" name="stock" min="0" step="1" placeholder="10"></div>
-          <div class="fld"><label>Badge (optional)</label><input type="text" name="badge" placeholder="New / Bestseller / Premium"></div>
+          <div class="fld"><label>Badge (optional)</label>
+            <select name="badge" data-badge-select></select>
+            <input type="text" class="reveal" name="badgeNew" data-badge-new maxlength="14" placeholder="Your own badge word" hidden>
+          </div>
         </div>
 
         <div class="fld">
           <label>Available sizes (EU)</label>
           <div class="size-toggles" data-size-toggles></div>
+          <div class="presets">
+            <button type="button" class="btn btn--ghost btn--sm" data-size-preset="men">Men 40–46</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-size-preset="women">Women 35–41</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-size-preset="all">All sizes</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-size-preset="none">Clear</button>
+          </div>
         </div>
 
         <div class="fld">
