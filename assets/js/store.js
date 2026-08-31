@@ -2,8 +2,8 @@
    Moon Lite's Footwear — STORE ENGINE
    Shared across the storefront. No frameworks, no build step.
    Handles: config, product source (seed + local edits), currency,
-   direct WhatsApp contact, and shared chrome (nav/footer).
-   NO CART — customers order by messaging on WhatsApp directly.
+   order/enquiry email relay, and shared chrome (nav/footer).
+   NO CART, NO WHATSAPP — customers order via an email form.
    ===================================================================== */
 (function () {
   "use strict";
@@ -124,7 +124,7 @@
       return loadPromise;
     }
     loadPromise = (async () => {
-      /* settings first — the header's WhatsApp link depends on them */
+      /* settings first — the footer + policies depend on them */
       try {
         const s = await SB.fetchSettings();
         if (s && typeof s === "object") {
@@ -194,29 +194,44 @@
     }
   }
 
-  /* ---------- WhatsApp contact (no cart) ---------- */
-  function waHref(text) {
-    const num = (CFG.whatsappNumber || "").replace(/\D/g, "");
-    return "https://wa.me/" + num + "?text=" + encodeURIComponent(text);
-  }
-  function contactMessage() {
-    return "Hello " + (CFG.brandName || "") + " 👋\n\nI'd like to make an enquiry.";
-  }
-  function singleProductMessage(p, size, color) {
-    const L = [];
-    L.push("Hello " + (CFG.brandName || "") + " 👋");
-    L.push("I'd like to order this pair:");
-    L.push("");
-    L.push("• " + p.name + (p.subtitle ? " (" + p.subtitle + ")" : ""));
-    if (size) L.push("• Size (EU): " + size);
-    if (color) L.push("• Colour: " + color);
-    L.push("• Price: " + money(p.price));
-    L.push("");
-    L.push("Is it available? Please confirm and let me know about delivery. Thank you!");
-    return L.join("\n");
-  }
-  function restockMessage(p) {
-    return "Hello " + (CFG.brandName || "") + " 👋\n\nIs \"" + p.name + "\" back in stock? Please let me know when it's available.";
+  /* ---------- orders / enquiries by email (Web3Forms) ----------
+     The site is static, so a form can't send mail by itself. Web3Forms
+     relays it: we POST the fields and they email the shop. The access
+     key is set in config.js (web3formsKey). If it's missing we fall back
+     to opening the visitor's own email app, so an order is never a dead
+     end while setup is being finished.                                    */
+  async function submitForm(fields, subject) {
+    const key = (CFG.web3formsKey || "").trim();
+    const data = fields || {};
+    const subj = subject || ((CFG.brandName || "Moon Lite's Footwear") + " — new message");
+
+    if (!key) {
+      const to = CFG.email || "";
+      if (!to) throw new Error("Orders aren't set up yet — please add the shop email.");
+      const lines = Object.keys(data)
+        .filter(k => k !== "botcheck" && data[k] !== "" && data[k] != null)
+        .map(k => k.replace(/_/g, " ") + ": " + data[k]);
+      window.location.href = "mailto:" + to
+        + "?subject=" + encodeURIComponent(subj)
+        + "&body=" + encodeURIComponent(lines.join("\n"));
+      return { success: true, fallback: true };
+    }
+
+    const payload = Object.assign({
+      access_key: key,
+      subject: subj,
+      from_name: CFG.brandName || "Moon Lite's Footwear"
+    }, data);
+
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload)
+    });
+    let out = {};
+    try { out = await res.json(); } catch (e) {}
+    if (!res.ok || !out.success) throw new Error((out && out.message) || "Couldn't send. Please check your connection and try again.");
+    return out;
   }
 
   /* ---------- SHA-256 (admin passcode) ---------- */
@@ -248,7 +263,7 @@
     ig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
     tk: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.3 2 1.6 3.6 3.5 4v2.3c-1.3 0-2.5-.4-3.5-1v6.2a5.6 5.6 0 1 1-5.6-5.6c.3 0 .6 0 .9.1v2.4a3.2 3.2 0 1 0 2.3 3V3h2.4z"/></svg>',
     fb: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 8.5V7c0-.8.5-1 .9-1H17V3h-2.5C11.8 3 11 4.8 11 6.7v1.8H9V11h2v10h3V11h2.2l.4-2.5H14z"/></svg>',
-    wa: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.9 5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5-4.5-.2-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.3.3c-.1.2-.3.3-.1.6.1.3.7 1.1 1.4 1.8.9.8 1.7 1 2 1.2.2.1.4.1.6-.1l.7-.9c.2-.2.4-.2.6-.1l1.9.9c.2.1.4.2.4.3.1.1.1.6-.1 1.3z"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
   };
   window.ML_ICON = ICON;
@@ -274,8 +289,8 @@
             <img src="assets/img/logo-web.png" alt="${CFG.brandName}">
           </a>
           <nav class="nav__links" aria-label="Primary">${navLinks}</nav>
-          <a class="nav__wa" href="${waHref(contactMessage())}" target="_blank" rel="noopener" aria-label="Contact us on WhatsApp">
-            ${ICON.wa}<span>WhatsApp</span>
+          <a class="nav__wa" href="shop.html" aria-label="Shop all footwear">
+            ${ICON.search}<span>Shop</span>
           </a>
           <button class="nav__toggle" data-nav-toggle aria-label="Menu" aria-expanded="false"><span></span></button>
         </div>`;
@@ -287,7 +302,7 @@
       if (socials.instagram) soc.push(`<a href="${socials.instagram}" aria-label="Instagram" target="_blank" rel="noopener">${ICON.ig}</a>`);
       if (socials.tiktok) soc.push(`<a href="${socials.tiktok}" aria-label="TikTok" target="_blank" rel="noopener">${ICON.tk}</a>`);
       if (socials.facebook) soc.push(`<a href="${socials.facebook}" aria-label="Facebook" target="_blank" rel="noopener">${ICON.fb}</a>`);
-      soc.push(`<a href="${waHref(contactMessage())}" aria-label="WhatsApp" target="_blank" rel="noopener">${ICON.wa}</a>`);
+      if (CFG.email) soc.push(`<a href="mailto:${CFG.email}" aria-label="Email us">${ICON.mail}</a>`);
       footer.innerHTML = `
         <div class="wrap">
           <div class="footer-grid">
@@ -359,14 +374,14 @@
     getProducts, saveProducts, resetProducts, setProducts, getProduct, categories, allSizes,
     getSettings, saveSettings, resetSettings, saveSettingsRemote, liveSettings, baseConfig,
     load, source, hasCache,
-    waHref, contactMessage, singleProductMessage, restockMessage,
+    submitForm,
     chrome, initReveal, icon: ICON
   };
 
   document.addEventListener("DOMContentLoaded", () => {
     chrome(); initReveal();
-    /* once live settings arrive, redraw the header so the WhatsApp
-       button and brand name reflect the database */
+    /* once live settings arrive, redraw the footer so brand name and
+       contact details reflect the database */
     if (MODE === "live") load().then(() => chrome()).catch(() => {});
   });
 })();
