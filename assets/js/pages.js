@@ -193,12 +193,12 @@
 
         <div class="pdp__actions">
           <form class="order-form" data-order-form novalidate>
-            <div class="field"><label for="of-name">Your name</label><input id="of-name" name="name" type="text" autocomplete="name" placeholder="e.g. Ejiofor Emmanuel" required></div>
+            <div class="field"><label for="of-name">Your name</label><input id="of-name" name="name" type="text" autocomplete="name" placeholder="Your full name" required></div>
             <div class="order-grid">
-              <div class="field"><label for="of-phone">Phone number</label><input id="of-phone" name="phone" type="tel" autocomplete="tel" placeholder="e.g. 0816 517 8225" required></div>
+              <div class="field"><label for="of-phone">Phone number</label><input id="of-phone" name="phone" type="tel" autocomplete="tel" placeholder="e.g. 0801 234 5678" required></div>
               <div class="field"><label for="of-alt">Alternative phone <span style="opacity:.6">(optional)</span></label><input id="of-alt" name="alt_phone" type="tel" autocomplete="tel" placeholder="Another number to reach you"></div>
             </div>
-            <div class="field"><label for="of-addr">Home / office address</label><input id="of-addr" name="address" type="text" autocomplete="street-address" placeholder="e.g. Ali Jodi, Sokoto"></div>
+            <div class="field"><label for="of-addr">Home / office address</label><input id="of-addr" name="address" type="text" autocomplete="street-address" placeholder="House no, street, area, city"></div>
             <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none">
             <button class="btn btn--gold btn--block" type="submit" data-order-submit>${p.soldOut ? "Ask about restock" : "Place order"}</button>
             <p class="order-form__note" data-order-msg>${p.soldOut ? "Leave your details and we’ll reach out the moment this pair is back in stock." : "Pick your size above, then send. We’ll receive your order and call you to confirm and arrange delivery — no online payment needed."}</p>
