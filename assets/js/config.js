@@ -11,11 +11,23 @@ window.MOONLITE_CONFIG = {
   brandName: "Moon Lite's Footwear",
   tagline: "Step into the night in style.",
 
-  /* --- WhatsApp orders ---
-     Put your number in full international format, digits only.
-     Nigeria example: 234 + number without the leading 0.
-     0803 123 4567  ->  "2348031234567"                                */
-  whatsappNumber: "2348000000000",
+  /* =====================================================================
+     ❶ ORDERS BY EMAIL  (Web3Forms)
+     ---------------------------------------------------------------------
+     The shop is a static site, so a form can't send mail on its own.
+     Web3Forms relays it for free: a customer fills the order form, and
+     the details land in the shop's inbox — then you just call them.
+
+     One-time setup:
+       1. Go to  https://web3forms.com
+       2. Type the email where orders should arrive. They send you a key.
+       3. Paste that key between the quotes below and re-upload this file.
+
+     Leave "" and order buttons fall back to opening the customer's own
+     email app, addressed to the "email" set further down — so nothing is
+     ever a dead end while you finish setup.
+     ===================================================================== */
+  web3formsKey: "",
 
   /* --- Currency --- */
   currency: { code: "NGN", symbol: "₦", locale: "en-NG" },
@@ -70,8 +82,8 @@ window.MOONLITE_CONFIG = {
      supabase-setup.sql: the public can only read, and every write needs
      a signed-in account that only you can create.
      ===================================================================== */
-  supabaseUrl:     "https://lablqmwpwzglughklixm.supabase.co",
-  supabaseAnonKey: "sb_publishable_McqGgXRr0u_uWAsU4dh49w_MHKu-xWh",
+  supabaseUrl:     "",
+  supabaseAnonKey: "",
   supabaseBucket:  "product-photos",
 
   /* =====================================================================
