@@ -101,3 +101,36 @@ window.MOONLITE_CONFIG = {
      ===================================================================== */
   adminPassHash: "0adbb69bf6e3d0a3a51bfe939009779f588ab8565ace03aa661b8faa540b9526"
 };
+
+/* =====================================================================
+   ❹ PASSWORD-RESET CATCHER  —  nothing to edit here
+   ---------------------------------------------------------------------
+   The "reset your password" email sends the browser back carrying a
+   one-time token in the part of the address after the #. Supabase decides
+   which page to send it to, and if that page isn't on its own allow-list
+   it quietly uses the Site URL instead — the home page. The token then
+   lands somewhere that has no idea what to do with it, and the reset
+   looks broken even though it worked.
+
+   So: any page that spots a reset token in the address hands it straight
+   over to the dashboard, token and all. With the allow-list set up
+   properly this never fires — it's here so a console setting can't break
+   the reset again.
+
+   Allow-list to keep in Supabase → Authentication → URL Configuration:
+     Site URL       https://moonlitesfootwear.com
+     Redirect URLs  https://moonlitesfootwear.com/**
+   ===================================================================== */
+(function () {
+  var hash = String(location.hash || "").replace(/^#/, "");
+  if (!hash) return;
+
+  var isRecovery = hash.indexOf("type=recovery") > -1;
+  var isAuthError = hash.indexOf("error_code=") > -1 && hash.indexOf("error_description=") > -1;
+  if (!isRecovery && !isAuthError) return;
+
+  /* already on the dashboard — it handles this itself, don't loop */
+  if (/dashboard/i.test(location.pathname)) return;
+
+  location.replace("/dashboard.html#" + hash);
+})();
