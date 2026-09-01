@@ -165,6 +165,60 @@
     keepSession(null);
   }
 
+  /* ---------- forgotten password ----------
+     Sends the "reset your password" email. Supabase answers 200 whether or
+     not the address has an account, so the gate can't be used to work out
+     who does — say "check your inbox" either way.                          */
+  async function sendRecovery(email, redirectTo) {
+    const qs = redirectTo ? ("?redirect_to=" + encodeURIComponent(redirectTo)) : "";
+    const res = await raw("/auth/v1/recover" + qs, {
+      method: "POST",
+      auth: false,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + ANON },
+      body: JSON.stringify({ email: String(email || "").trim() })
+    });
+    await parse(res);
+    return true;
+  }
+
+  /* The reset link sends her back with tokens in the URL fragment, e.g.
+     dashboard.html#access_token=…&type=recovery. Adopt that as a session so
+     she can set a new password, then scrub the address bar — a live token
+     should not sit in history or get pasted to anyone.
+     Returns {recovery:true} | {error:"…"} | null.                          */
+  function adoptRecovery() {
+    const hash = String(location.hash || "").replace(/^#/, "");
+    if (!hash) return null;
+    const q = new URLSearchParams(hash);
+    const scrub = () => {
+      try { history.replaceState(null, "", location.pathname + location.search); }
+      catch (e) { location.hash = ""; }
+    };
+    const bad = q.get("error_description") || q.get("error");
+    if (bad) { scrub(); return { error: String(bad).replace(/\+/g, " ") }; }
+    const token = q.get("access_token");
+    if (q.get("type") !== "recovery" || !token) return null;
+    keepSession({
+      access_token: token,
+      refresh_token: q.get("refresh_token") || "",
+      expires_at: Date.now() + (Number(q.get("expires_in") || 3600) * 1000),
+      email: ""
+    });
+    scrub();
+    return { recovery: true };
+  }
+
+  /* A session adopted from a link has no email attached — fetch it so the
+     dashboard can still greet her by address. Never throws. */
+  async function whoAmI() {
+    if (!signedIn()) return "";
+    try {
+      const data = await parse(await raw("/auth/v1/user", {}));
+      if (data && data.email) keepSession(Object.assign({}, session, { email: data.email }));
+      return (data && data.email) || "";
+    } catch (e) { return ""; }
+  }
+
   /* ---------- shape mapping (db snake_case <-> app camelCase) ---------- */
   function fromRow(r) {
     return {
@@ -327,6 +381,7 @@
   window.MLSB = {
     enabled, base: BASE, bucket: BUCKET,
     signIn, signOut, refresh, ensureFresh, signedIn, currentEmail, changePassword,
+    sendRecovery, adoptRecovery, whoAmI,
     listProducts, saveProduct, saveProducts, deleteProduct,
     fetchSettings, pushSettings,
     uploadPhoto, removePhotoByUrl, publicUrl, dataUrlToBlob,
