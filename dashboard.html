@@ -33,6 +33,9 @@
     .gate__card .login input { text-align: left; letter-spacing: normal; font-size: 1rem; padding: .8em .9em; margin-bottom: .7rem; }
     .gate__card .login input:focus { border-color: var(--gold); outline: none; }
     .gate__note { color: var(--muted); font-size: 12px; margin: .9rem 0 0; }
+    .gate__link { background: none; border: 0; padding: 0; font: inherit; color: var(--gold); text-decoration: underline; cursor: pointer; }
+    .gate__link:hover { opacity: .8; }
+    .gate__ok { color: #1E7A46; font-size: var(--step--1); min-height: 1.3em; margin-bottom: .6rem; }
     .gate__card [hidden] { display: none; }
     .gate__err { color: #A83232; font-size: var(--step--1); min-height: 1.3em; margin-bottom: .6rem; }
     .app { display: none; }
@@ -150,7 +153,24 @@
         <input type="password" name="password" placeholder="Your password" autocomplete="current-password" aria-label="Password">
         <div class="gate__err" data-login-err></div>
         <button class="btn btn--gold btn--block" type="submit" data-login-btn>Sign in</button>
-        <p class="gate__note">Forgotten your password? Ask whoever set up your shop to reset it for you.</p>
+        <p class="gate__note"><button type="button" class="gate__link" data-forgot>Forgotten your password?</button></p>
+      </form>
+
+      <!-- step 1 of a reset: ask us to email a link -->
+      <form class="login" data-reset-form hidden>
+        <input type="email" name="email" placeholder="Your email" autocomplete="username" aria-label="Email">
+        <div class="gate__err" data-reset-err></div>
+        <button class="btn btn--gold btn--block" type="submit" data-reset-btn>Email me a reset link</button>
+        <p class="gate__note">Open the link on this device and you can set a new password.<br>
+          <button type="button" class="gate__link" data-reset-cancel>Back to sign in</button></p>
+      </form>
+
+      <!-- step 2 of a reset: she arrived back from the emailed link -->
+      <form class="login" data-newpw-form hidden>
+        <input type="password" name="password" placeholder="New password (8 characters or more)" autocomplete="new-password" aria-label="New password">
+        <input type="password" name="confirm" placeholder="Type it again" autocomplete="new-password" aria-label="Confirm new password">
+        <div class="gate__err" data-newpw-err></div>
+        <button class="btn btn--gold btn--block" type="submit" data-newpw-btn>Save new password</button>
       </form>
     </div>
   </div>
