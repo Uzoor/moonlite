@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reset your password — Moon Lite's Footwear</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icon-16.png">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Moon Lite's">
+  <meta name="theme-color" content="#0E0E10">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;1,6..96,500&family=Jost:wght@400;500;600&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/moonlite.css">
+  <style>
+    [hidden] { display: none !important; }
+    body { background: #0E0E10; }
+    .pw { min-height: 100dvh; display: grid; place-items: center; padding: 1.5rem; }
+    .pw__card { width: min(410px, 100%); background: var(--ivory); border-radius: 8px; padding: 2.4rem; text-align: center; box-shadow: var(--shadow); }
+    .pw__card img { height: 76px; margin: 0 auto 1.2rem; display: block; }
+    .pw__card h1 { font-size: var(--step-2); margin-bottom: .3rem; }
+    .pw__sub { color: var(--muted); font-size: var(--step--1); margin-bottom: 1.5rem; line-height: 1.5; }
+    .pw__card input[type=email], .pw__card input[type=password] { width: 100%; padding: .8em .9em; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: .7rem; background: #fff; font-size: 1rem; }
+    .pw__card input:focus { border-color: var(--gold); outline: none; }
+    .pw__msg { font-size: var(--step--1); line-height: 1.45; min-height: 1.3em; margin-bottom: .6rem; text-align: left; }
+    .pw__msg.bad { color: #A83232; }
+    .pw__msg.ok { color: #1E7A46; }
+    .pw__note { color: var(--muted); font-size: 12px; margin: 1rem 0 0; line-height: 1.6; }
+    .pw__note a { color: var(--gold); }
+    .pw__peek { display: flex; align-items: center; gap: .5rem; font-family: var(--util); font-size: 12px; letter-spacing: .04em; color: var(--muted); text-align: left; margin: -.1rem 0 .9rem; cursor: pointer; }
+    .pw__peek input { width: auto; margin: 0; }
+    .pw__done svg { width: 46px; height: 46px; color: #1E7A46; margin: 0 auto .8rem; display: block; }
+  </style>
+</head>
+<body>
+  <main class="pw">
+    <div class="pw__card">
+      <a href="index.html" aria-label="Moon Lite's Footwear home"><img src="assets/img/mark-light.png" alt="Moon Lite's"></a>
+      <h1 data-title>Reset your password</h1>
+      <p class="pw__sub" data-sub>Loading…</p>
+
+      <!-- ── step 1 ── ask us to email a link ───────────────────────── -->
+      <form data-ask hidden>
+        <input type="email" name="email" placeholder="The email you sign in with" autocomplete="username" aria-label="Email">
+        <div class="pw__msg" data-ask-msg></div>
+        <button class="btn btn--gold btn--block" type="submit" data-ask-btn>Email me a reset link</button>
+        <p class="pw__note">
+          The link works for about an hour, and only once.<br>
+          <a href="dashboard.html">Back to sign in</a>
+        </p>
+      </form>
+
+      <!-- ── step 2 ── she came back from the emailed link ───────────── -->
+      <form data-new hidden>
+        <input type="password" name="password" placeholder="New password" autocomplete="new-password" aria-label="New password">
+        <input type="password" name="confirm" placeholder="Type it again" autocomplete="new-password" aria-label="Confirm new password">
+        <label class="pw__peek"><input type="checkbox" data-peek> Show what I'm typing</label>
+        <div class="pw__msg" data-new-msg>Use 8 characters or more.</div>
+        <button class="btn btn--gold btn--block" type="submit" data-new-btn>Save new password</button>
+        <p class="pw__note">Write the new one down somewhere safe before you leave this page.</p>
+      </form>
+
+      <!-- ── done ───────────────────────────────────────────────────── -->
+      <div class="pw__done" data-done hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9.5"/>
+        </svg>
+        <p class="pw__msg ok" style="text-align:center">Password changed. You're signed in.</p>
+        <a class="btn btn--gold btn--block" href="dashboard.html">Go to your dashboard</a>
+      </div>
+
+      <!-- ── the database isn't connected ────────────────────────────── -->
+      <div data-off hidden>
+        <p class="pw__msg bad">This page only works while the shop is connected to its database.</p>
+        <p class="pw__note" style="margin-top:0">Right now the dashboard is using a passcode instead of an email and
+          password, so there's no password to reset — you change the passcode from inside the dashboard itself.<br><br>
+          <a href="dashboard.html">Back to the dashboard</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script>
+  /* =====================================================================
+     Moon Lite's Footwear — PASSWORD RESET
+     ---------------------------------------------------------------------
+     One page, two jobs, decided by whether the address carries a token:
+
+       no token   → ask for an email and send the reset link
+       token      → let her choose a new password, then sign her in
+
+     Kept deliberately standalone: it needs config.js for the keys and
+     supabase.js for the calls, and nothing else. If the shop's catalogue
+     scripts ever break, the way back into the dashboard still works.
+     ===================================================================== */
+  (function () {
+    "use strict";
+
+    var SB = (window.MLSB && window.MLSB.enabled) ? window.MLSB : null;
+    var $ = function (s) { return document.querySelector(s); };
+
+    var title = $("[data-title]");
+    var sub = $("[data-sub]");
+    var ask = $("[data-ask]");
+    var newf = $("[data-new]");
+    var done = $("[data-done]");
+    var off = $("[data-off]");
+
+    /* where the emailed link should land — always this exact page, whatever
+       address she happened to open it from. This is the one URL that has to
+       be listed in Supabase → Authentication → URL Configuration. */
+    var RETURN_TO = location.origin + "/reset.html";
+
+    /* true when she's already signed in rather than arriving from a link —
+       the form is the same, only the wording changes */
+    var fromSession = false;
+
+    function say(el, text, kind) {
+      if (!el) return;
+      el.className = "pw__msg" + (kind ? " " + kind : "");
+      el.textContent = text || "";
+    }
+
+    function view(which) {
+      [ask, newf, done, off].forEach(function (el) { if (el) el.hidden = true; });
+      if (which === "new") {
+        newf.hidden = false;
+        title.textContent = fromSession ? "Change your password" : "Choose a new password";
+        sub.textContent = fromSession
+          ? "You're signed in, so you can change it right here — no email needed."
+          : "Almost done — pick something you'll remember.";
+        setTimeout(function () { newf.password.focus(); }, 120);
+      } else if (which === "done") {
+        done.hidden = false;
+        title.textContent = "All set";
+        sub.textContent = "Use your new password the next time you sign in.";
+      } else if (which === "off") {
+        off.hidden = false;
+        title.textContent = "Nothing to reset";
+        sub.textContent = "";
+      } else {
+        ask.hidden = false;
+        title.textContent = "Reset your password";
+        sub.textContent = "We'll email you a link. Open it on this device and you can set a new password.";
+        setTimeout(function () { ask.email.focus(); }, 120);
+      }
+    }
+
+    /* ---- step 1: send the link ---- */
+    if (ask) ask.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var msg = $("[data-ask-msg]");
+      var btn = $("[data-ask-btn]");
+      var email = ask.email.value.trim();
+      if (!email || email.indexOf("@") === -1) { say(msg, "Enter the email you sign in with.", "bad"); return; }
+      say(msg, "");
+      btn.disabled = true;
+      var label = btn.textContent;
+      btn.textContent = "Sending…";
+      SB.sendRecovery(email, RETURN_TO).then(function () {
+        /* Supabase answers the same way whether or not that address has an
+           account, so nobody can use this page to find out who does. */
+        say(msg, "Check your inbox — we've sent a link to " + email + ". It can take a minute, and it may land in spam.", "ok");
+        btn.hidden = true;
+        ask.email.disabled = true;
+      }).catch(function (ex) {
+        btn.disabled = false;
+        btn.textContent = label;
+        say(msg, (ex && ex.message) ? ex.message : "Couldn't send the email. Please try again.", "bad");
+      });
+    });
+
+    /* ---- step 2: save the new password ---- */
+    var peek = $("[data-peek]");
+    if (peek) peek.addEventListener("change", function () {
+      var type = peek.checked ? "text" : "password";
+      newf.password.type = type;
+      newf.confirm.type = type;
+    });
+
+    if (newf) newf.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var msg = $("[data-new-msg]");
+      var btn = $("[data-new-btn]");
+      var pw = newf.password.value;
+      if (pw.length < 8) { say(msg, "Use at least 8 characters.", "bad"); newf.password.focus(); return; }
+      if (pw !== newf.confirm.value) { say(msg, "The two passwords don't match.", "bad"); newf.confirm.focus(); return; }
+      say(msg, "");
+      btn.disabled = true;
+      var label = btn.textContent;
+      btn.textContent = "Saving…";
+      SB.changePassword(pw).then(function () {
+        newf.password.value = ""; newf.confirm.value = "";
+        return SB.whoAmI();
+      }).then(function () {
+        view("done");
+      }).catch(function (ex) {
+        btn.disabled = false;
+        btn.textContent = label;
+        var m = (ex && ex.message) ? ex.message : "";
+        /* a link that's expired or already been used lands here */
+        if (/expired|invalid|sign in|jwt/i.test(m)) {
+          view("ask");
+          say($("[data-ask-msg]"), "That link has expired or was already used. Ask for a fresh one.", "bad");
+          return;
+        }
+        say(msg, m || "Couldn't save the new password. Please try again.", "bad");
+      });
+    });
+
+    /* ---- decide which view to open on ---- */
+    if (!SB) { view("off"); return; }
+
+    var back = SB.adoptRecovery();
+    if (back && back.recovery) {
+      view("new");
+    } else if (back && back.error) {
+      view("ask");
+      say($("[data-ask-msg]"), back.error + " Ask for a fresh link below.", "bad");
+    } else if (SB.signedIn()) {
+      /* Already signed in, so there's nothing to prove by email — let her
+         change it on the spot. This also catches the rare case where some
+         other page swallowed the token from the address first. */
+      fromSession = true;
+      view("new");
+    } else {
+      view("ask");
+    }
+  })();
+  </script>
+</body>
+</html>
